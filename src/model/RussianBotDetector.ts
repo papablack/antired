@@ -1,78 +1,94 @@
 import * as tf from '@tensorflow/tfjs';
 import { BotDetectorConfig, PredictionResult, TrainingData } from '../types/types';
 import { DEFAULT_MODEL_CONFIG, MODEL_LAYERS_CONFIG } from './modelConfig';
-import { TrainingService } from '../services/trainingService';
+import { trainingService } from '../services/trainingService';
 import { TensorUtils } from '../utils/tensorUtils';
 import { Logger } from '../utils/logger';
+import fs from 'fs';
+import path from 'path';
 
 export class RussianBotDetector {
-    private model: tf.LayersModel;
+    public model: tf.LayersModel;
     private config: BotDetectorConfig;
+    private isInitialized: boolean = false;
 
     constructor(config: BotDetectorConfig = DEFAULT_MODEL_CONFIG) {
         this.config = config;
-        this.model = this.buildModel();
+        this.initializeModel();
+    }
+
+    private async initializeModel(): Promise<void> {
+        try {
+            this.model = this.buildModel();
+            this.isInitialized = true;
+            Logger.info('Model initialized successfully');
+        } catch (error) {
+            Logger.error('Failed to initialize model:', error as Error);
+            throw new Error('Model initialization failed');
+        }
     }
 
     private buildModel(): tf.LayersModel {
         const model = tf.sequential();
 
-        // Embedding
+        // Input layer with embedding
         model.add(tf.layers.embedding({
             inputDim: this.config.vocabSize,
             outputDim: this.config.embeddingDim,
             inputLength: this.config.maxSequenceLength,
-            name: 'warstwa_wektorow_slow'
+            name: 'embedding_layer'
         }));
 
-        // Conv1D
+        // Conv1D layer
         model.add(tf.layers.conv1d({
             filters: MODEL_LAYERS_CONFIG.conv.filters,
             kernelSize: MODEL_LAYERS_CONFIG.conv.kernelSize,
             padding: 'same',
             activation: 'relu',
-            name: 'wykrywacz_propagandy_lokalnej'
+            name: 'conv1d_layer'
         }));
 
-        // MaxPooling1D
+        // MaxPooling1D layer
         model.add(tf.layers.maxPooling1d({
             poolSize: 2,
-            name: 'reduktor_szumu_propagandowego'
+            name: 'maxpool_layer'
         }));
 
-        // LSTM layers
+        // First LSTM layer
         model.add(tf.layers.lstm({
             units: MODEL_LAYERS_CONFIG.lstm.firstLayer,
             returnSequences: true,
-            name: 'analizator_sekwencji'
+            name: 'lstm_layer_1'
         }));
 
+        // Second LSTM layer
         model.add(tf.layers.lstm({
             units: MODEL_LAYERS_CONFIG.lstm.secondLayer,
-            name: 'analizator_glebokiej_propagandy'
+            name: 'lstm_layer_2'
         }));
 
-        // Dense + Dropout
+        // Dense layer with dropout
         model.add(tf.layers.dense({
             units: MODEL_LAYERS_CONFIG.dense.units,
             activation: 'relu',
-            name: 'klasyfikator_wstepny'
+            name: 'dense_layer'
         }));
 
         model.add(tf.layers.dropout({
             rate: MODEL_LAYERS_CONFIG.dense.dropout,
-            name: 'eliminator_przeuczenia'
+            name: 'dropout_layer'
         }));
 
         // Output layer
         model.add(tf.layers.dense({
             units: 1,
             activation: 'sigmoid',
-            name: 'final_decyzja_czy_ruski_bot'
+            name: 'output_layer'
         }));
 
+        // Compile the model
         model.compile({
-            optimizer: tf.train.adam(),
+            optimizer: tf.train.adam(0.001),
             loss: 'binaryCrossentropy',
             metrics: ['accuracy']
         });
@@ -80,21 +96,40 @@ export class RussianBotDetector {
         return model;
     }
 
+    async ensureModelInitialized(): Promise<void> {
+        if (!this.isInitialized || !this.model) {
+            await this.initializeModel();
+        }
+    }
+
     async detectBot(text: number[]): Promise<PredictionResult> {
-        const input = TensorUtils.prepareInputData([text]);
+        await this.ensureModelInitialized();
+        
+        if (!this.model) {
+            throw new Error('Model is not initialized');
+        }
+
+        // Ensure text is properly shaped for the model
+        const input = tf.tidy(() => {
+            // Reshape input to 3D: [batch_size, timesteps, features]
+            return tf.tensor2d([text], [1, this.config.maxSequenceLength]);
+        });
+
         try {
-            const prediction = await this.model.predict(input) as tf.Tensor;
+            const prediction = this.model.predict(input) as tf.Tensor;
             const probability = await TensorUtils.tensorToNumber(prediction);
+            
+            // Cleanup tensors
+            tf.dispose([prediction, input]);
+
             return {
                 probability,
                 isBot: probability > 0.5,
                 confidence: this.getConfidenceLevel(probability)
             };
         } catch (error) {
-            Logger.error('Błąd podczas wykrywania bota:', error as Error);
+            Logger.error('Error during bot detection:', error as Error);
             throw error;
-        } finally {
-            TensorUtils.dispose(input);
         }
     }
 
@@ -104,7 +139,45 @@ export class RussianBotDetector {
         return 'low';
     }
 
-    async train(...args: Parameters<typeof TrainingService.trainModel>) {
-        return TrainingService.trainModel(...args);
+    async train(data: TrainingData, options = {}): Promise<tf.History> {
+        await this.ensureModelInitialized();
+        
+        if (!this.model) {
+            throw new Error('Model is not initialized');
+        }
+
+        return trainingService.trainModel(this.model, data, options);
+    }
+
+    async saveModel(modelPath: string): Promise<void> {
+        await this.ensureModelInitialized();
+        
+        if (!this.model) {
+            throw new Error('Model is not initialized');
+        }
+
+        try {
+            // Ensure directory exists
+            const dir = path.dirname(modelPath);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            await this.model.save(`file://${modelPath}`);
+            Logger.info(`Model saved to ${modelPath}`, 'green');
+        } catch (error) {
+            Logger.error('Error saving model:', error as Error);
+            throw error;
+        }
+    }
+
+    async loadModel(path: string): Promise<void> {
+        try {
+            this.model = await tf.loadLayersModel(`file://${path}`);
+            this.isInitialized = true;
+            Logger.info(`Model loaded from ${path}`);
+        } catch (error) {
+            Logger.error('Error loading model:', error as Error);
+            throw error;
+        }
     }
 }

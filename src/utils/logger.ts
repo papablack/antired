@@ -1,5 +1,6 @@
 import winston from 'winston';
 import chalk, { ChalkInstance } from 'chalk';
+import path from 'path';
 
 // Define custom log levels
 const customLevels = {
@@ -46,7 +47,7 @@ const winstonLogger = winston.createLogger({
             )
         }),
         new winston.transports.File({ 
-            filename: '../logs/debug.log'
+            filename: path.resolve(process.cwd(), 'logs/debug.log')
         })
     ]
 });
@@ -66,7 +67,7 @@ export class Logger {
     };
 
     static dump(object: any): void {
-        winstonLogger.debug(JSON.stringify(object, null, 2));
+        console.log(object)
     }
 
     static info(message: string, color?: LoggerColors): void {
