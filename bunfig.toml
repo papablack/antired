@@ -1,0 +1,6 @@
+[test]
+preload = ["./setup.ts"]
+
+[build]
+entrypoints = ["./src/index.ts"]
+outdir = "./dist"
