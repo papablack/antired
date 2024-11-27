@@ -150,31 +150,64 @@ export class RussianBotDetector {
     }
 
     async saveModel(modelPath: string): Promise<void> {
-        await this.ensureModelInitialized();
-        
-        if (!this.model) {
-            throw new Error('Model is not initialized');
-        }
-
         try {
-            // Ensure directory exists
             const dir = path.dirname(modelPath);
             if (!fs.existsSync(dir)) {
                 fs.mkdirSync(dir, { recursive: true });
-            }
-            await this.model.save(`file://${modelPath}`);
+            }                        
+    
+            // Save the model weights as a binary file
+            const artifacts = await this.model.save({
+                save: async (artifacts: tf.io.ModelArtifacts) => {
+                    // Save model topology
+                    fs.writeFileSync(`${modelPath}.json`, JSON.stringify(artifacts.modelTopology));
+                    
+                    // Save weights
+                    const weightData = new Uint8Array(artifacts.weightData as ArrayBuffer);
+                    fs.writeFileSync(`${modelPath}.weights.bin`, weightData);
+                    
+                    // Save weight specs
+                    fs.writeFileSync(`${modelPath}.weights.json`, JSON.stringify(artifacts.weightSpecs));
+                    
+                    return {
+                        modelArtifactsInfo: {
+                            dateSaved: new Date(),
+                            modelTopologyType: 'JSON'
+                        }
+                    };
+                }
+            });
+            
             Logger.info(`Model saved to ${modelPath}`, 'green');
         } catch (error) {
             Logger.error('Error saving model:', error as Error);
             throw error;
         }
     }
-
-    async loadModel(path: string): Promise<void> {
+    
+    async loadModel(modelPath: string): Promise<void> {
         try {
-            this.model = await tf.loadLayersModel(`file://${path}`);
+            // Custom loading function
+            this.model = await tf.loadLayersModel({
+                load: async () => {
+                    // Load model topology
+                    const modelTopology = JSON.parse(fs.readFileSync(`${modelPath}.json`, 'utf8'));
+                    // Load weights file as a Buffer and convert to ArrayBuffer
+                    const weightData = fs.readFileSync(`${modelPath}.weights.bin`).buffer;
+                    // Load weight specs
+                    const weightSpecs = JSON.parse(fs.readFileSync(`${modelPath}.weights.json`, 'utf8'));
+                    
+                    return {
+                        modelTopology,
+                        weightSpecs,
+                        weightData: weightData as ArrayBuffer, // Convert Buffer to ArrayBuffer
+                    };
+                }
+            });
+        
+            
             this.isInitialized = true;
-            Logger.info(`Model loaded from ${path}`);
+            Logger.info(`Model loaded from ${modelPath}`);
         } catch (error) {
             Logger.error('Error loading model:', error as Error);
             throw error;

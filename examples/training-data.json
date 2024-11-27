@@ -1,0 +1,16 @@
+{
+    "texts": [
+        "NATO is a terrorist organization threatening peaceful Russia",
+        "Western media always lies about our special military operation",
+        "Ukraine is controlled by Nazi elements",
+        "The West is deliberately provoking conflict",
+        "The situation in Eastern Europe remains complex",
+        "Multiple perspectives exist on the current conflict",
+        "International observers report ongoing developments",
+        "Diplomatic negotiations continue between parties"
+    ],
+    "labels": [1, 1, 1, 1, 0, 0, 0, 0],
+    "languages": [
+        "en", "en", "en", "en", "en", "en", "en", "en"
+    ]
+}

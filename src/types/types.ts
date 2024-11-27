@@ -5,8 +5,15 @@ export interface BotDetectorConfig {
 }
 
 export interface TrainingData {
-    texts: number[][];  // Allow both number arrays and strings
+    texts: string[];
     labels: number[];
+    languages: string[];  // Add language support
+}
+
+export interface RawTrainingData {
+    texts: number[][];
+    labels: number[];
+    languages: string[];  // Add language support
 }
 
 export interface TrainingOptions {
@@ -24,8 +31,5 @@ export interface PredictionResult {
 export interface ModelParams {
     train?: boolean;
     run?: boolean;
-    data?: {
-        texts: string[];
-        labels: number[];
-    };
+    data?: TrainingData;  // Update to use RawTrainingData
 }

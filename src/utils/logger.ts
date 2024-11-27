@@ -22,6 +22,11 @@ const colorParts: {[key: string]: ChalkInstance} = {
     logDate: chalk.rgb(255, 140, 0)
 }
 
+const stripColors = winston.format((info: any) => {
+    info.message = info.message.replace(/\u001b\[\d+m/g, '');
+    return info;
+});
+
 // Add colors to winston
 winston.addColors(customColors);
 
@@ -47,7 +52,14 @@ const winstonLogger = winston.createLogger({
             )
         }),
         new winston.transports.File({ 
-            filename: path.resolve(process.cwd(), 'logs/debug.log')
+            filename: path.resolve(process.cwd(), 'logs/debug.log'),
+            format: winston.format.combine(
+                stripColors(),
+                winston.format.timestamp(),
+                winston.format.printf(({ level, message, timestamp }) => {
+                    return `${timestamp} [${level}]: ${message}`;
+                })
+            )
         })
     ]
 });

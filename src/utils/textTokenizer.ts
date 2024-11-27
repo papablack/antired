@@ -27,9 +27,9 @@ export class TextTokenizer {
         }
     }
 
-    async tokenize(texts: string[]): Promise<number[][]> {
+    async tokenize(texts: string[], languages?: string[]): Promise<number[][]> {
         if (!this.model) {
-            this.model = await this.initializeModel(); // Auto-initialize if needed
+            this.model = await this.initializeModel();
         }
 
         try {         
@@ -38,20 +38,34 @@ export class TextTokenizer {
             const embeddingArray = await embeddings.array();
 
             // Convert embeddings to fixed-length sequences
-            const sequences = embeddingArray.map(embedding => 
-                this.convertToFixedLengthSequence(
-                    this.quantizeEmbedding(embedding)
-                )
-            );
+            const sequences = embeddingArray.map((embedding, index) => {
+                const sequence = this.quantizeEmbedding(embedding);
+                // If language is provided, append language identifier to sequence
+                if (languages && languages[index]) {
+                    const langId = this.getLanguageId(languages[index]);
+                    sequence.push(langId);
+                }
+                return this.convertToFixedLengthSequence(sequence);
+            });
 
-            // Cleanup
             embeddings.dispose();
-
             return sequences;
         } catch (error) {
             Logger.error('Error during tokenization:', error as Error);
             throw error;
         }
+    }
+
+    getLanguageId(language: string): number {
+        // Simple language ID mapping - extend as needed
+        const languageMap: {[key: string]: number} = {
+            'pl': 0,
+            'en': 1,
+            'ru': 2,
+            'uk': 3,
+            // Add more languages as needed
+        };
+        return languageMap[language] || 0;
     }
 
     private quantizeEmbedding(embedding: number[]): number[] {
@@ -79,7 +93,7 @@ export class TextTokenizer {
 
     async batchTokenize(texts: string[]): Promise<number[][]> {
         const batchSize = 32; // Adjust based on your memory constraints
-        const results: number[][] = [];
+        const results: number[][] = [];        
 
         for (let i = 0; i < texts.length; i += batchSize) {
             const batch = texts.slice(i, i + batchSize);
@@ -88,5 +102,9 @@ export class TextTokenizer {
         }
 
         return results;
+    }
+
+    convertSequencesToStrings(sequences: number[][]): string[] {
+        return sequences.map(sequence => sequence.join(' '));
     }
 }
