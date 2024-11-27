@@ -5,14 +5,17 @@ import { RussianBotDetector } from './model/RussianBotDetector';
 import { TextTokenizer } from './utils/textTokenizer';
 import { DEFAULT_MODEL_CONFIG } from './model/modelConfig';
 import { Logger } from './utils/logger';
+import { trainingService } from './services/trainingService';
 
 async function loadTrainingData(dataPath: string): Promise<ModelParams['data']> {
     try {
         const rawData = await fs.readFile(dataPath, 'utf8');
         const data = JSON.parse(rawData);
         
-        if (!data.texts || !data.labels || !Array.isArray(data.texts) || !Array.isArray(data.labels)) {
-            throw new Error('Invalid training data format');
+        // Update validation to include languages
+        if (!data.texts || !data.labels || !data.languages || 
+            !Array.isArray(data.texts) || !Array.isArray(data.labels) || !Array.isArray(data.languages)) {
+            throw new Error('Invalid training data format - must include texts, labels, and languages arrays');
         }
         
         return data;
@@ -37,10 +40,12 @@ async function runModel(params?: ModelParams): Promise<void> {
         }
 
         if (params.data) {
+            // Tokenize with language support
             const tokenizedTexts = await tokenizer.batchTokenize(params.data.texts);
             const processedTrainingData: TrainingData = {
-                texts: tokenizedTexts,
-                labels: params.data.labels
+                texts: tokenizer.convertSequencesToStrings(tokenizedTexts),
+                labels: params.data.labels,
+                languages: params.data.languages // Include languages in processed data
             };
         
             await trainingService.trainModel(detectorModel.model, processedTrainingData, {
