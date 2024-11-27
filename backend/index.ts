@@ -6,6 +6,7 @@ import { TextTokenizer } from './utils/textTokenizer';
 import { DEFAULT_MODEL_CONFIG } from './model/modelConfig';
 import { Logger } from './utils/logger';
 import { trainingService } from './services/trainingService';
+import { setupGPU } from './utils/gpuSetup';
 
 async function loadTrainingData(dataPath: string): Promise<ModelParams['data']> {
     try {
@@ -30,12 +31,13 @@ async function runModel(params?: ModelParams): Promise<void> {
     const detectorModel = new RussianBotDetector(DEFAULT_MODEL_CONFIG);
     const tokenizer = new TextTokenizer(DEFAULT_MODEL_CONFIG);
 
+
     if (params?.train) {
         Logger.info('TRAINING', 'blue');
         
-        if (!params.data && process.argv[2]) {
+        if (!params.data && process.argv[3]) {
             // Load training data from JSON file specified in CLI args
-            const dataPath = process.argv[2];
+            const dataPath = path.resolve(__dirname, '..', 'data',process.argv[3] + '.json');
             params.data = await loadTrainingData(dataPath);
         }
 
@@ -73,6 +75,10 @@ if (require.main === module) {
         console.log('Usage: bun run backend/index.ts <training-data.json>');
         process.exit(1);
     }
+
+    // setupGPU().then(() => {
+       
+    // });
     
     runModel({ train: true }).catch(error => {
         Logger.error('Error running model:', error);

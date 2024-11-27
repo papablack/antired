@@ -17,14 +17,27 @@ export class TrainingHelper {
     static async trainModel(
         model: tf.LayersModel,
         data: TrainingData,
-        options: TrainingOptions = {}
+        options: TrainingOptions = {
+            epochs: TRAINING_DEFAULTS.epochs,
+            batchSize: TRAINING_DEFAULTS.batchSize,
+            validationSplit: TRAINING_DEFAULTS.validationSplit
+        }
     ): Promise<tf.History> {
         try {
             const { texts, labels, languages } = data;
             const {
                 epochs = TRAINING_DEFAULTS.epochs,
                 batchSize = TRAINING_DEFAULTS.batchSize,
-                validationSplit = TRAINING_DEFAULTS.validationSplit
+                validationSplit = TRAINING_DEFAULTS.validationSplit,
+                shuffle = true,          
+                verbose = 1,             
+                callbacks = [  
+                    tf.callbacks.earlyStopping({
+                        monitor: 'val_loss',
+                        patience: 3,
+                        restoreBestWeights: true
+                    })
+                ]
             } = options;
     
             // Add input validation and debugging
@@ -123,7 +136,10 @@ export class TrainingHelper {
                 epochs,
                 batchSize,
                 validationSplit,
+                shuffle,
+                verbose,
                 callbacks: {
+                    ...callbacks,
                     onEpochEnd: (epoch, logs) => {                
                         return Logger.training(epoch, logs as TFLogType)
                     }

@@ -23,7 +23,7 @@ export async function setupGPU() {
                 unreliable: memory.unreliable
             });
         } else {
-            Logger.warn('No GPU detected, falling back to CPU');
+            Logger.info('No GPU detected, falling back to CPU', 'yellow');
         }
 
         // Log current backend

@@ -17,9 +17,12 @@ export interface RawTrainingData {
 }
 
 export interface TrainingOptions {
-    epochs?: number;
-    batchSize?: number;
-    validationSplit?: number;
+    epochs: number;
+    batchSize: number;
+    validationSplit: number;
+    verbose?: boolean
+    shuffle?: boolean
+    callbacks?: (()=>void)[]
 }
 
 export interface PredictionResult {
