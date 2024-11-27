@@ -3,5 +3,5 @@ dist/
 logs/*
 data/*
 !data/.gitkeep
-output/model/*
-!output/model/.gitkeep
+output/*
+!output/.gitkeep
