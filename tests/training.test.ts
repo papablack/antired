@@ -1,9 +1,9 @@
-import { RussianBotDetector } from '../src/model/RussianBotDetector';
-import { TextTokenizer } from '../src/utils/textTokenizer';
-import { DEFAULT_MODEL_CONFIG } from '../src/model/modelConfig';
-import { trainingService } from '../src/services/trainingService';
+import { RussianBotDetector } from '../backend/model/RussianBotDetector';
+import { TextTokenizer } from '../backend/utils/textTokenizer';
+import { DEFAULT_MODEL_CONFIG } from '../backend/model/modelConfig';
+import { trainingService } from '../backend/services/trainingService';
 import { beforeEach, describe, expect, test } from "bun:test";
-import { RawTrainingData, TrainingData } from '../src/types/types';
+import { RawTrainingData, TrainingData } from '../backend/types/types';
 import fs from 'fs';
 import path from 'path';
 

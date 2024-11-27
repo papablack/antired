@@ -65,7 +65,7 @@ async function runModel(params?: ModelParams): Promise<void> {
 if (require.main === module) {
     const args = process.argv.slice(2);
     if (args.length === 0) {
-        console.log('Usage: bun run src/index.ts <training-data.json>');
+        console.log('Usage: bun run backend/index.ts <training-data.json>');
         process.exit(1);
     }
     

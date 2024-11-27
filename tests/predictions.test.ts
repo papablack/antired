@@ -1,9 +1,9 @@
-import { RussianBotDetector } from '../src/model/RussianBotDetector';
-import { TextTokenizer } from '../src/utils/textTokenizer';
-import { DEFAULT_MODEL_CONFIG } from '../src/model/modelConfig';
+import { RussianBotDetector } from '../backend/model/RussianBotDetector';
+import { TextTokenizer } from '../backend/utils/textTokenizer';
+import { DEFAULT_MODEL_CONFIG } from '../backend/model/modelConfig';
 import { beforeEach, describe, expect, test } from "bun:test";
 import path from 'path';
-import { Logger } from '../src/utils/logger';
+import { Logger } from '../backend/utils/logger';
 
 // Set a long timeout for the entire test suite
 const TIMEOUT = 120000; // 2 minutes

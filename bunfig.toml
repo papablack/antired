@@ -2,5 +2,5 @@
 preload = ["./setup.ts"]
 
 [build]
-entrypoints = ["./src/index.ts"]
+entrypoints = ["./backend/index.ts"]
 outdir = "./dist"

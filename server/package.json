@@ -1,0 +1,77 @@
+{
+  "name": "antired_server",
+  "main": "src/index.ts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "npm-run-all --parallel watch:transpile watch:run",
+    "watch:run": "nodemon \"./build/rws.server.js\" --watch \"./build\"",
+    "watch:transpile": "webpack --config webpack.config.js --watch",
+    "build": "webpack --config webpack.config.js --output-path ./build",
+    "server": "node build/rws.server.js",
+    "hello": "rws hello user=$USER",
+    "test": "ts-mocha -r tsconfig-paths/register --config tests/tsconfig.json 'tests/**/*.test.ts'"
+  },
+  "dependencies": {
+    "@anthropic-ai/tokenizer": "^0.0.4",
+    "@aws-sdk/client-comprehend": "^3.635.0",
+    "@langchain/anthropic": "^0.2.15",
+    "@langchain/aws": "^0.0.10",
+    "@langchain/cohere": "^0.2.2",
+    "@langchain/community": "^0.2.27",
+    "@langchain/core": "^0.2.27",
+    "@mongodb-js/zstd": "1.2.0",
+    "@nestjs/config": "^3.2.3",
+    "@rws-framework/server": "3.2.8-alpha",
+    "@types/archiver": "^6.0.2",
+    "@types/body-parser": "^1.19.5",
+    "@types/express": "^4.17.21",
+    "cohere-ai": "^7.12.1",
+    "dotenv": "^16.4.5",
+    "faiss-node": "^0.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.2.16",
+    "nestjs-command": "^3.1.4",
+    "nodemon": "^1.12.1",
+    "npm-run-all": "^4.1.1",
+    "pdf.js-extract": "^0.2.1",
+    "pdf2json": "^3.0.5",
+    "pm2": "^5.3.0",
+    "puppeteer": "^19.7.2",
+    "reflect-metadata": "^0.2.1",
+    "socket.io": "^4.8.1",
+    "ts-transformer-keys": "^0.4.4",
+    "tsconfig-paths-webpack-plugin": "^4.1.0",
+    "typedoc": "^0.26.2",
+    "typescript": "^5.5.2",
+    "webpack-node-externals": "^3.0.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.7.5",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/socket.io": "^3.0.1",
+    "@types/xml2js": "^0.4.14",
+    "ts-node": "^10.9.1",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.1.4",
+    "yarn": "^1.22.22"
+  },
+  "keywords": [
+    "bot-detection",
+    "machine-learning",
+    "tensorflow",
+    "nlp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/papablack/antired.git"
+  },
+  "bugs": {
+    "url": "https://github.com/papablack/antired/issues"
+  },
+  "homepage": "https://github.com/papablack/antired#readme"
+}
